@@ -104,7 +104,7 @@ import {
   useSubmittedProducts,
   type SubmittedProduct,
 } from "@/context/SubmittedProductsContext";
-import { getSellerOrders, getSellerEarningsSummary, type SellerOrder, type SellerEarningsSummary } from "@/server/seller.functions";
+import { getSellerOrders, getSellerEarningsSummary, getSellerWallet, type SellerOrder, type SellerEarningsSummary, type SellerWallet } from "@/server/seller.functions";
 
 const editSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
