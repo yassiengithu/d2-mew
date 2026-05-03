@@ -67,19 +67,21 @@ const persistShipment = async (s: Shipment) => {
     .eq("code", s.courier_code)
     .maybeSingle();
 
-  const { error } = await supabase.from("shipments").insert({
-    order_id: s.order_id,
-    courier_id: courier?.id ?? null,
-    courier_name: s.courier_name,
-    courier_type: s.courier_type,
-    shipping_cost: s.shipping_cost,
-    currency: s.currency,
-    tracking_number: s.tracking_number,
-    label_url: s.label_url,
-    external_shipment_id: s.external_shipment_id ?? null,
-    status: s.status,
-    metadata: s.metadata ?? {},
-  });
+  const { error } = await supabase.from("shipments").insert([
+    {
+      order_id: s.order_id,
+      courier_id: courier?.id ?? null,
+      courier_name: s.courier_name,
+      courier_type: s.courier_type,
+      shipping_cost: s.shipping_cost,
+      currency: s.currency,
+      tracking_number: s.tracking_number,
+      label_url: s.label_url,
+      external_shipment_id: s.external_shipment_id ?? null,
+      status: s.status,
+      metadata: (s.metadata ?? {}) as never,
+    },
+  ]);
   if (error) throw new Error(error.message);
 
   // Mirror selected courier + tracking onto the order for quick reads.

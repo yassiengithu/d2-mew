@@ -30,9 +30,9 @@ export const easyshipHandler: CourierHandler = {
       service_name: r.courier_name,
       cost: r.cost ?? 0,
       currency: r.currency ?? "PHP",
-      min_delivery_days: r.min_delivery_time,
-      max_delivery_days: r.max_delivery_time,
-      provider_rate_id: r.courier_id,
+      min_delivery_days: r.min_days ?? undefined,
+      max_delivery_days: r.max_days ?? undefined,
+      provider_rate_id: r.courier_id ?? undefined,
     }));
   },
 
@@ -51,7 +51,7 @@ export const easyshipHandler: CourierHandler = {
       receiver: {
         contact_name: order.receiver.contact_name,
         contact_phone: order.receiver.contact_phone,
-        contact_email: order.receiver.contact_email,
+        contact_email: order.receiver.contact_email ?? "buyer@example.com",
         line_1: order.receiver.line_1,
         country_alpha2: order.receiver.country_alpha2,
         city: order.receiver.city,
