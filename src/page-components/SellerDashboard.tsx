@@ -104,7 +104,7 @@ import {
   useSubmittedProducts,
   type SubmittedProduct,
 } from "@/context/SubmittedProductsContext";
-import { getSellerOrders, getSellerEarningsSummary, type SellerOrder, type SellerEarningsSummary } from "@/server/seller.functions";
+import { getSellerOrders, getSellerEarningsSummary, getSellerWallet, type SellerOrder, type SellerEarningsSummary, type SellerWallet } from "@/server/seller.functions";
 
 const editSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -123,6 +123,7 @@ const editSchema = z.object({
 function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
+  const [wallet, setWallet] = useState<SellerWallet | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
@@ -138,11 +139,12 @@ function SellerDashboardPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getSellerOrders(), getSellerEarningsSummary()])
-      .then(([ordersData, earningsData]) => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet()])
+      .then(([ordersData, earningsData, walletData]) => {
         if (!active) return;
         setOrders(ordersData);
         setEarningsSummary(earningsData);
+        setWallet(walletData);
       })
       .catch((e: unknown) => {
         if (!active) return;
@@ -290,6 +292,37 @@ function SellerDashboardPage() {
               </CardContent>
             </Card>
           ))}
+        </section>
+
+        <section>
+          <Card>
+            <CardHeader className="border-b border-border/60">
+              <CardTitle className="text-base font-semibold">Wallet</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pending</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-warning">
+                  {wallet === null ? "—" : `₱${wallet.pending_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Awaiting release</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-success">
+                  {wallet === null ? "—" : `₱${wallet.available_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Ready to withdraw</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Paid Out</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+                  {wallet === null ? "—" : `₱${wallet.paid_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Lifetime withdrawn</p>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         <section>

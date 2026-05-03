@@ -20,6 +20,31 @@ export type SellerEarning = {
   created_at: string;
 };
 
+export type SellerWallet = {
+  pending_balance: number;
+  available_balance: number;
+  paid_balance: number;
+};
+
+export async function getSellerWallet(): Promise<SellerWallet> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const userId = userRes.user?.id;
+  if (!userId) return { pending_balance: 0, available_balance: 0, paid_balance: 0 };
+
+  const { data, error } = await supabase
+    .from("seller_wallet")
+    .select("pending_balance, available_balance, paid_balance")
+    .eq("seller_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return {
+    pending_balance: Number(data?.pending_balance ?? 0),
+    available_balance: Number(data?.available_balance ?? 0),
+    paid_balance: Number(data?.paid_balance ?? 0),
+  };
+}
+
 export type SellerEarningsSummary = {
   earnings: SellerEarning[];
   totalGross: number;

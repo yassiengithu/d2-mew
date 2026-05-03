@@ -268,6 +268,36 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_wallet: {
+        Row: {
+          available_balance: number
+          created_at: string
+          id: string
+          paid_balance: number
+          pending_balance: number
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          available_balance?: number
+          created_at?: string
+          id?: string
+          paid_balance?: number
+          pending_balance?: number
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          available_balance?: number
+          created_at?: string
+          id?: string
+          paid_balance?: number
+          pending_balance?: number
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
           created_at: string
