@@ -442,6 +442,12 @@ function SellerDashboardPage() {
           </Card>
         </section>
 
+        <section>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base font-semibold">
+                  Your products
                 </CardTitle>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
                   {products.length}
