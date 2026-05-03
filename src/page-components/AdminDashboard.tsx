@@ -62,6 +62,35 @@ function AdminDashboardPage() {
   const [perDay, setPerDay] = useState<CommissionDay[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [platformCommission, setPlatformCommission] = useState<PlatformCommissionSummary | null>(null);
+  const [payouts, setPayouts] = useState<AdminPayout[] | null>(null);
+  const [payoutsError, setPayoutsError] = useState<string | null>(null);
+  const [pendingPayoutId, setPendingPayoutId] = useState<string | null>(null);
+
+  const loadPayouts = useCallback(() => {
+    setPayoutsError(null);
+    getAdminPayouts()
+      .then((p) => setPayouts(p))
+      .catch((e: unknown) =>
+        setPayoutsError(e instanceof Error ? e.message : "Failed to load payouts"),
+      );
+  }, []);
+
+  useEffect(() => {
+    loadPayouts();
+  }, [loadPayouts]);
+
+  const changePayoutStatus = async (p: AdminPayout, next: AdminPayout["status"]) => {
+    setPendingPayoutId(p.id);
+    try {
+      await updatePayoutStatus({ data: { id: p.id, status: next } });
+      toast.success(`Payout marked ${next}`);
+      loadPayouts();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPendingPayoutId(null);
+    }
+  };
 
   const [status, setStatus] = useState<string>("all");
   const [from, setFrom] = useState<string>("");
