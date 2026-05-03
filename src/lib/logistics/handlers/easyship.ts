@@ -1,7 +1,10 @@
-// Easyship handler — wraps the existing edge-function client.
-import { supabase } from "@/integrations/supabase/client";
-import { fetchRates, createShipment as createEasyshipShipment } from "@/lib/easyshipClient";
-import type { CourierHandler, OrderLike, Rate, Shipment, TrackingResult } from "../types";
+// Easyship handler — wraps the mock/sandbox client.
+import {
+  fetchRates,
+  createShipment as createEasyshipShipment,
+  trackShipment as trackEasyshipShipment,
+} from "@/lib/easyshipClient";
+import type { CourierHandler, Rate, Shipment, TrackingResult } from "../types";
 
 export const easyshipHandler: CourierHandler = {
   code: "easyship",
@@ -16,12 +19,7 @@ export const easyshipHandler: CourierHandler = {
         postal_code: order.receiver.postal_code,
         line_1: order.receiver.line_1,
       },
-      parcel: {
-        weight_kg: order.parcel.weight_kg,
-        length_cm: order.parcel.length_cm,
-        width_cm: order.parcel.width_cm,
-        height_cm: order.parcel.height_cm,
-      },
+      parcel: order.parcel,
       declared_value: order.parcel.declared_value,
     });
     return rates.map<Rate>((r) => ({
@@ -42,12 +40,7 @@ export const easyshipHandler: CourierHandler = {
     }
     const res = await createEasyshipShipment({
       courierId: rate.provider_rate_id,
-      parcel: {
-        weight_kg: order.parcel.weight_kg,
-        length_cm: order.parcel.length_cm,
-        width_cm: order.parcel.width_cm,
-        height_cm: order.parcel.height_cm,
-      },
+      parcel: order.parcel,
       receiver: {
         contact_name: order.receiver.contact_name,
         contact_phone: order.receiver.contact_phone,
@@ -62,7 +55,7 @@ export const easyshipHandler: CourierHandler = {
     return {
       order_id: order.id,
       courier_code: "easyship",
-      courier_name: rate.courier_name,
+      courier_name: res.courier_name ?? rate.courier_name,
       courier_type: "api",
       shipping_cost: rate.cost,
       currency: rate.currency,
@@ -74,20 +67,18 @@ export const easyshipHandler: CourierHandler = {
   },
 
   async trackShipment(trackingNumber) {
-    const { data, error } = await supabase.functions.invoke("easyship-track", {
-      body: { tracking_number: trackingNumber },
-    });
-    if (error) throw new Error(error.message);
-    const events = (data?.events ?? []) as Array<{
-      status: string;
-      location?: string;
-      message?: string;
-      occurred_at: string;
-    }>;
+    const res = await trackEasyshipShipment(trackingNumber);
     return {
-      tracking_number: trackingNumber,
-      current_status: data?.status ?? events.at(-1)?.status ?? "unknown",
-      events,
+      tracking_number: res.tracking_number,
+      current_status: res.status,
+      courier_name: res.courier_name ?? "Easyship",
+      estimated_delivery: res.estimated_delivery,
+      events: res.events.map((e) => ({
+        status: e.status,
+        location: e.location ?? null,
+        message: e.message ?? null,
+        occurred_at: e.occurred_at,
+      })),
       manual: false,
     };
   },

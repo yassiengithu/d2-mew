@@ -9,7 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import BottomNav from "@/components/BottomNav";
 import CourierSelector, { type CourierRate } from "@/components/CourierSelector";
 import CreateShipmentPanel from "@/components/CreateShipmentPanel";
-import { supabase } from "@/integrations/supabase/client";
+
 import { saveSelectedCourier, getSelectedCourier } from "@/lib/orderShipping";
 import { toast } from "sonner";
 
@@ -75,30 +75,26 @@ const ShippingCalculator = () => {
 
     setLoading(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("easyship-rates", {
-        body: {
-          origin: {
-            country_alpha2: "PH",
-            city: parsed.data.origin_city,
-            postal_code: parsed.data.origin_postal,
-          },
-          destination: {
-            country_alpha2: parsed.data.dest_country,
-            city: parsed.data.dest_city,
-            postal_code: parsed.data.dest_postal,
-          },
+      const { fetchRates } = await import("@/lib/easyshipClient");
+      const list = (await fetchRates({
+        origin: {
+          country_alpha2: "PH",
+          city: parsed.data.origin_city,
+          postal_code: parsed.data.origin_postal,
+        },
+        destination: {
+          country_alpha2: parsed.data.dest_country,
+          city: parsed.data.dest_city,
+          postal_code: parsed.data.dest_postal,
+        },
+        parcel: {
           weight_kg: parsed.data.weight_kg,
           length_cm: parsed.data.length_cm,
           width_cm: parsed.data.width_cm,
           height_cm: parsed.data.height_cm,
         },
-      });
+      })) as Rate[];
 
-      if (fnError) throw new Error(fnError.message);
-      if (!data?.success) throw new Error(data?.error ?? "Failed to fetch rates");
-
-      const list: Rate[] = (data.rates ?? []).filter((r: Rate) => r.cost !== null);
-      list.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));
       setRates(list);
       if (list.length > 0) {
         const firstId = list[0].courier_id ?? `${list[0].courier_name}-0`;

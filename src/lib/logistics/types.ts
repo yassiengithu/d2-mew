@@ -75,6 +75,8 @@ export type TrackingEvent = {
 export type TrackingResult = {
   tracking_number: string | null;
   current_status: string;
+  courier_name?: string | null;
+  estimated_delivery?: string | null;
   events: TrackingEvent[];
   // True when the courier has no API and updates come from manual fulfillment.
   manual: boolean;

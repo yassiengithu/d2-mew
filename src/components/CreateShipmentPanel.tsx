@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+
 import DownloadLabelButton from "@/components/DownloadLabelButton";
 import { toast } from "sonner";
 
@@ -78,31 +78,18 @@ const CreateShipmentPanel = ({
 
     setSubmitting(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "easyship-create-shipment",
-        {
-          body: {
-            courier_id: courierId,
-            sender: {
-              ...s.data,
-              contact_email: s.data.contact_email || undefined,
-              country_alpha2: origin.country_alpha2,
-              city: origin.city,
-              postal_code: origin.postal_code,
-            },
-            receiver: {
-              ...r.data,
-              contact_email: r.data.contact_email || undefined,
-              country_alpha2: destination.country_alpha2,
-              city: destination.city,
-              postal_code: destination.postal_code,
-            },
-            parcel: { ...parcel, declared_value: 100, currency: "PHP" },
-          },
+      const { createShipment } = await import("@/lib/easyshipClient");
+      const data = await createShipment({
+        courierId,
+        parcel,
+        receiver: {
+          ...r.data,
+          contact_email: r.data.contact_email || undefined,
+          country_alpha2: destination.country_alpha2,
+          city: destination.city,
+          postal_code: destination.postal_code,
         },
-      );
-      if (fnError) throw new Error(fnError.message);
-      if (!data?.success) throw new Error(data?.error ?? "Failed to create shipment");
+      });
 
       setResult(data as CreatedShipment);
       toast.success("Shipment created");
