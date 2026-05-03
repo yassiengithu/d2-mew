@@ -14,16 +14,243 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          body: string
+          buyer_id: string
+          created_at: string
+          id: string
+          product_id: number
+          seller_name: string
+          sender: string
+        }
+        Insert: {
+          body: string
+          buyer_id: string
+          created_at?: string
+          id?: string
+          product_id: number
+          seller_name: string
+          sender: string
+        }
+        Update: {
+          body?: string
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          product_id?: number
+          seller_name?: string
+          sender?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          commission_amount: number
+          created_at: string
+          id: string
+          payment_status: string
+          seller_earnings: number
+          seller_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commission_amount?: number
+          created_at?: string
+          id: string
+          payment_status?: string
+          seller_earnings?: number
+          seller_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commission_amount?: number
+          created_at?: string
+          id?: string
+          payment_status?: string
+          seller_earnings?: number
+          seller_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_purchases: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          product_id: number
+          qty: number
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          product_id: number
+          qty?: number
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: number
+          qty?: number
+        }
+        Relationships: []
+      }
+      product_views: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: number
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: number
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: number
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sellers: {
+        Row: {
+          created_at: string
+          id: string
+          net_earnings: number
+          total_commission_paid: number
+          total_sales: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          net_earnings?: number
+          total_commission_paid?: number
+          total_sales?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          net_earnings?: number
+          total_commission_paid?: number
+          total_sales?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +377,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
