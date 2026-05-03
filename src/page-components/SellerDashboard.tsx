@@ -426,8 +426,12 @@ function SellerDashboardPage() {
                           </td>
                           <td className="px-6 py-3">
                             <span className={cn(
-                              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                              e.status === "available" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                              e.status === "paid"
+                                ? "bg-success/10 text-success"
+                                : e.status === "approved"
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground"
                             )}>
                               {e.status}
                             </span>
