@@ -123,6 +123,7 @@ const editSchema = z.object({
 function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
+  const [wallet, setWallet] = useState<SellerWallet | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
@@ -138,11 +139,12 @@ function SellerDashboardPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getSellerOrders(), getSellerEarningsSummary()])
-      .then(([ordersData, earningsData]) => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet()])
+      .then(([ordersData, earningsData, walletData]) => {
         if (!active) return;
         setOrders(ordersData);
         setEarningsSummary(earningsData);
+        setWallet(walletData);
       })
       .catch((e: unknown) => {
         if (!active) return;
