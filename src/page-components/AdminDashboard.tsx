@@ -330,6 +330,10 @@ function AdminDashboardPage() {
           </section>
         )}
 
+        <section className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Recent orders</CardTitle>
             </CardHeader>
             <CardContent>
               {error ? (
