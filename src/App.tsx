@@ -38,6 +38,7 @@ const MessageThread = lazy(() => import("@/page-components/MessageThread"));
 const Notifications = lazy(() => import("@/page-components/Notifications"));
 const Admin = lazy(() => import("@/page-components/Admin"));
 const AdminDashboard = lazy(() => import("@/page-components/AdminDashboard"));
+const AdminShipments = lazy(() => import("@/page-components/AdminShipments"));
 const SellerDashboard = lazy(() => import("@/page-components/SellerDashboard"));
 const ShippingCalculator = lazy(() => import("@/page-components/ShippingCalculator"));
 const TrackShipment = lazy(() => import("@/page-components/TrackShipment"));
