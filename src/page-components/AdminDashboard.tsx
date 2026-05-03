@@ -292,7 +292,7 @@ function AdminDashboardPage() {
                         />
                       </div>
                       <span className="w-20 shrink-0 text-right font-medium tabular-nums text-foreground">
-                        ${d.commission.toFixed(2)}
+                        ₱{d.commission.toFixed(2)}
                       </span>
                     </li>
                   ))}
