@@ -391,7 +391,7 @@ function AdminDashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-foreground">{s.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {s.sellerName} · ${s.price.toFixed(2)} · {s.category}
+                          {s.sellerName} · ₱{s.price.toFixed(2)} · {s.category}
                         </p>
                       </div>
                       <span
