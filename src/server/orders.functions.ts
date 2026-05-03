@@ -47,6 +47,9 @@ export async function recordOrder(arg: Wrapped<RecordOrderInput>) {
     total_amount: data.total_amount,
     commission_amount: data.commission_amount,
     seller_earnings: data.seller_earnings,
+    selected_courier_id: data.selected_courier_id ?? null,
+    selected_courier_name: data.selected_courier_name ?? null,
+    tracking_number: data.tracking_number ?? null,
   });
 
   if (error) {
