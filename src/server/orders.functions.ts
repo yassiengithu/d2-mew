@@ -14,6 +14,9 @@ const RecordOrderSchema = z.object({
   payment_status: z.enum(["pending", "paid", "failed"]).default("pending"),
   status: z.string().min(1).default("pending"),
   seller_id: z.string().uuid().nullable().optional(),
+  selected_courier_id: z.string().uuid().nullable().optional(),
+  selected_courier_name: z.string().nullable().optional(),
+  tracking_number: z.string().nullable().optional(),
 });
 
 type RecordOrderInput = z.input<typeof RecordOrderSchema>;
