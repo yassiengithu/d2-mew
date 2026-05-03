@@ -58,6 +58,7 @@ function AdminDashboardPage() {
   const [totalCommission, setTotalCommission] = useState<number | null>(null);
   const [perDay, setPerDay] = useState<CommissionDay[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [platformCommission, setPlatformCommission] = useState<PlatformCommissionSummary | null>(null);
 
   const [status, setStatus] = useState<string>("all");
   const [from, setFrom] = useState<string>("");
