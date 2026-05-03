@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      couriers: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
@@ -83,10 +113,13 @@ export type Database = {
           created_at: string
           id: string
           payment_status: string
+          selected_courier_id: string | null
+          selected_courier_name: string | null
           seller_earnings: number
           seller_id: string | null
           status: string
           total_amount: number
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
@@ -95,10 +128,13 @@ export type Database = {
           created_at?: string
           id: string
           payment_status?: string
+          selected_courier_id?: string | null
+          selected_courier_name?: string | null
           seller_earnings?: number
           seller_id?: string | null
           status?: string
           total_amount?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -107,14 +143,25 @@ export type Database = {
           created_at?: string
           id?: string
           payment_status?: string
+          selected_courier_id?: string | null
+          selected_courier_name?: string | null
           seller_earnings?: number
           seller_id?: string | null
           status?: string
           total_amount?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_selected_courier_id_fkey"
+            columns: ["selected_courier_id"]
+            isOneToOne: false
+            referencedRelation: "couriers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_purchases: {
         Row: {
@@ -214,6 +261,110 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      shipments: {
+        Row: {
+          courier_id: string | null
+          courier_name: string
+          courier_type: string
+          created_at: string
+          currency: string
+          external_shipment_id: string | null
+          id: string
+          label_url: string | null
+          metadata: Json
+          order_id: string
+          shipping_cost: number
+          status: string
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          courier_id?: string | null
+          courier_name: string
+          courier_type: string
+          created_at?: string
+          currency?: string
+          external_shipment_id?: string | null
+          id?: string
+          label_url?: string | null
+          metadata?: Json
+          order_id: string
+          shipping_cost?: number
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          courier_id?: string | null
+          courier_name?: string
+          courier_type?: string
+          created_at?: string
+          currency?: string
+          external_shipment_id?: string | null
+          id?: string
+          label_url?: string | null
+          metadata?: Json
+          order_id?: string
+          shipping_cost?: number
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_courier_id_fkey"
+            columns: ["courier_id"]
+            isOneToOne: false
+            referencedRelation: "couriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_events: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          message: string | null
+          occurred_at: string
+          shipment_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          occurred_at?: string
+          shipment_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          occurred_at?: string
+          shipment_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
