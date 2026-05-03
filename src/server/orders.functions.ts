@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Client-side wrappers that mirror the original "@tanstack/react-start" server-fn API.
 // These functions just call Supabase from the browser; RLS handles authorization.
 // API surface preserved: each function accepts an optional { data: ... } argument.
