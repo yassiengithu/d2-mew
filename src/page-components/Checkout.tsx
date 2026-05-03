@@ -428,6 +428,23 @@ const Checkout = () => {
     // these on status='completed', so this is mainly for the initial pending row.
     const commission = calculatePlatformFee(grandTotal);
     const sellerEarnings = Math.max(0, Math.round((grandTotal - commission) * 100) / 100);
+    // Resolve which courier to persist on the order row.
+    // Easyship live rate selected → "Easyship" (api). Otherwise → "J&T Express" (manual).
+    const isEasyshipPick = !!selectedLiveRate?.courier_id;
+    let courierDbId: string | null = null;
+    let courierDbName: string | null = isEasyshipPick ? (selectedLiveRate?.courier_name ?? "Easyship") : "J&T Express";
+    try {
+      const { data: courierRow } = await supabase
+        .from("couriers")
+        .select("id,name")
+        .eq("code", isEasyshipPick ? "easyship" : "jnt")
+        .maybeSingle();
+      if (courierRow) {
+        courierDbId = courierRow.id;
+        courierDbName = courierRow.name;
+      }
+    } catch { /* ignore */ }
+
     try {
       await recordOrder({
         data: {
@@ -437,6 +454,9 @@ const Checkout = () => {
           seller_earnings: sellerEarnings,
           payment_status: dbPaymentStatus,
           status: isOnline ? "pending_payment" : "pending",
+          selected_courier_id: courierDbId,
+          selected_courier_name: courierDbName,
+          tracking_number: isEasyshipPick ? null : null,
         },
       });
     } catch (err) {
@@ -1098,6 +1118,11 @@ const Checkout = () => {
           <div className="flex items-center gap-2 mb-2.5">
             <Truck className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold text-foreground">Choose Courier</h2>
+          </div>
+
+          <div className="rounded-xl bg-info/5 border border-info/20 p-2.5 mb-2.5 text-[11px] text-muted-foreground leading-relaxed">
+            <span className="font-bold text-foreground">Easyship</span> is automatic — a real shipment & tracking number are created instantly.
+            {" "}<span className="font-bold text-foreground">J&T Express</span> is manually fulfilled by our team — shipping cost shown is an estimate.
           </div>
 
           {/* Live Easyship rates */}
