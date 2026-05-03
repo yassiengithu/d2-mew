@@ -359,7 +359,7 @@ function SellerDashboardPage() {
                               <SellerStatusBadge status={o.status} />
                             </td>
                             <td className="px-6 py-3 text-right tabular-nums text-muted-foreground">
-                              ${total.toFixed(2)}
+                              ₱{total.toFixed(2)}
                             </td>
                             <td className="px-6 py-3 text-right tabular-nums">
                               {isCompleted ? (
