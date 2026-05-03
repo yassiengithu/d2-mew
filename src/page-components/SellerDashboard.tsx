@@ -122,6 +122,7 @@ const editSchema = z.object({
 
 function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
+  const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
@@ -137,14 +138,15 @@ function SellerDashboardPage() {
 
   useEffect(() => {
     let active = true;
-    getSellerOrders()
-      .then((data) => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary()])
+      .then(([ordersData, earningsData]) => {
         if (!active) return;
-        setOrders(data);
+        setOrders(ordersData);
+        setEarningsSummary(earningsData);
       })
       .catch((e: unknown) => {
         if (!active) return;
-        setError(e instanceof Error ? e.message : "Failed to load orders");
+        setError(e instanceof Error ? e.message : "Failed to load data");
       });
     return () => {
       active = false;
@@ -160,55 +162,50 @@ function SellerDashboardPage() {
     }
     return counts;
   }, [orders]);
-  // Earnings/commission are only populated by the DB trigger when status = 'completed'.
-  // All money totals must therefore be derived from completed orders to stay consistent.
-  const completedOrders = orders?.filter((o) => o.status === "completed") ?? [];
-  const completedSales = completedOrders.reduce(
-    (sum, o) => sum + Number(o.total_amount ?? 0),
-    0,
-  );
-  const completedEarnings = completedOrders.reduce(
-    (sum, o) => sum + Number(o.seller_earnings ?? 0),
-    0,
-  );
-  const completedCommission = completedSales - completedEarnings;
+
+  // Use seller_earnings table for accurate financial data
+  const totalNet = earningsSummary?.totalNet ?? 0;
+  const totalGross = earningsSummary?.totalGross ?? 0;
+  const totalFees = earningsSummary?.totalFees ?? 0;
+  const availableBalance = earningsSummary?.availableBalance ?? 0;
+  const paidOrders = orders?.filter((o) => o.payment_status === "paid") ?? [];
   const pendingSales =
     orders
-      ?.filter((o) => o.status === "pending")
+      ?.filter((o) => o.payment_status === "pending")
       .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0) ?? 0;
 
   const sections = useMemo(
     () => [
       {
-        title: "Net Earnings",
-        value: orders === null ? "—" : `$${completedEarnings.toFixed(2)}`,
+        title: "Available Balance",
+        value: earningsSummary === null ? "—" : `₱${availableBalance.toFixed(2)}`,
         icon: DollarSign,
-        description: "After commission (completed)",
+        description: "Ready for withdrawal",
         tone: "bg-success/10 text-success",
       },
       {
-        title: "Gross Sales",
-        value: orders === null ? "—" : `$${completedSales.toFixed(2)}`,
+        title: "Total Earnings",
+        value: earningsSummary === null ? "—" : `₱${totalNet.toFixed(2)}`,
         icon: TrendingUp,
-        description: `${completedOrders.length} completed order${completedOrders.length !== 1 ? "s" : ""}`,
+        description: `${paidOrders.length} paid order${paidOrders.length !== 1 ? "s" : ""}`,
         tone: "bg-primary/10 text-primary",
       },
       {
-        title: "Commission Paid",
-        value: orders === null ? "—" : `$${completedCommission.toFixed(2)}`,
+        title: "Platform Fees",
+        value: earningsSummary === null ? "—" : `₱${totalFees.toFixed(2)}`,
         icon: ShoppingCart,
-        description: "Platform fees (5%)",
+        description: "10% commission",
         tone: "bg-muted text-muted-foreground",
       },
       {
         title: "Pending Sales",
-        value: orders === null ? "—" : `$${pendingSales.toFixed(2)}`,
+        value: orders === null ? "—" : `₱${pendingSales.toFixed(2)}`,
         icon: Package,
         description: `${statusCounts.pending} pending order${statusCounts.pending !== 1 ? "s" : ""}`,
         tone: "bg-warning/10 text-warning",
       },
     ],
-    [orders, completedSales, completedEarnings, completedCommission, completedOrders.length, pendingSales, statusCounts.pending],
+    [earningsSummary, orders, availableBalance, totalNet, totalFees, paidOrders.length, pendingSales, statusCounts.pending],
   );
 
   const openEdit = (p: SubmittedProduct) => {
