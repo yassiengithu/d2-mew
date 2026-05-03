@@ -70,7 +70,14 @@ export const jtHandler: CourierHandler = {
     return {
       tracking_number: trackingNumber,
       current_status: shipment.status ?? "pending",
-      events: events ?? [],
+      courier_name: "J&T Express",
+      estimated_delivery: null,
+      events: (events ?? []).map((e) => ({
+        status: e.status,
+        location: e.location ?? null,
+        message: e.message ?? null,
+        occurred_at: e.occurred_at,
+      })),
       manual: true,
     };
   },
