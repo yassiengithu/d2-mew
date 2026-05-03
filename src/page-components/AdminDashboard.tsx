@@ -358,7 +358,7 @@ function AdminDashboardPage() {
                         {o.status}
                       </span>
                       <span className="font-medium text-foreground">
-                        ${Number(o.total_amount).toFixed(2)}
+                        ₱{Number(o.total_amount).toFixed(2)}
                       </span>
                     </li>
                   ))}
