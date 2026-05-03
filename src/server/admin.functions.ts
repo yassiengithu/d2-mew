@@ -65,3 +65,43 @@ export type AdminRevenueOverview = {
 export async function getAdminRevenueOverview(): Promise<AdminRevenueOverview> {
   return call<AdminRevenueOverview>("admin-revenue-overview");
 }
+
+export type PlatformCommissionSummary = {
+  totalPlatformFees: number;
+  totalGross: number;
+  earningsCount: number;
+};
+
+export async function getAdminPlatformCommission(): Promise<PlatformCommissionSummary> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const userId = userRes.user?.id;
+  if (!userId) throw new Error("Not authenticated");
+
+  // Verify admin role
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (!roleData) throw new Error("Unauthorized");
+
+  // Sum from orders where payment is paid (commission_amount is set by trigger)
+  const { data, error } = await supabase
+    .from("orders")
+    .select("commission_amount, total_amount")
+    .eq("payment_status", "paid");
+
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const totalPlatformFees = rows.reduce((s, r) => s + Number(r.commission_amount ?? 0), 0);
+  const totalGross = rows.reduce((s, r) => s + Number(r.total_amount ?? 0), 0);
+
+  return {
+    totalPlatformFees: Math.round(totalPlatformFees * 100) / 100,
+    totalGross: Math.round(totalGross * 100) / 100,
+    earningsCount: rows.length,
+  };
+}

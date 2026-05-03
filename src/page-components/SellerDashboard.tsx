@@ -104,7 +104,7 @@ import {
   useSubmittedProducts,
   type SubmittedProduct,
 } from "@/context/SubmittedProductsContext";
-import { getSellerOrders, type SellerOrder } from "@/server/seller.functions";
+import { getSellerOrders, getSellerEarningsSummary, type SellerOrder, type SellerEarningsSummary } from "@/server/seller.functions";
 
 const editSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -122,6 +122,7 @@ const editSchema = z.object({
 
 function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
+  const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
@@ -137,14 +138,15 @@ function SellerDashboardPage() {
 
   useEffect(() => {
     let active = true;
-    getSellerOrders()
-      .then((data) => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary()])
+      .then(([ordersData, earningsData]) => {
         if (!active) return;
-        setOrders(data);
+        setOrders(ordersData);
+        setEarningsSummary(earningsData);
       })
       .catch((e: unknown) => {
         if (!active) return;
-        setError(e instanceof Error ? e.message : "Failed to load orders");
+        setError(e instanceof Error ? e.message : "Failed to load data");
       });
     return () => {
       active = false;
@@ -160,55 +162,50 @@ function SellerDashboardPage() {
     }
     return counts;
   }, [orders]);
-  // Earnings/commission are only populated by the DB trigger when status = 'completed'.
-  // All money totals must therefore be derived from completed orders to stay consistent.
-  const completedOrders = orders?.filter((o) => o.status === "completed") ?? [];
-  const completedSales = completedOrders.reduce(
-    (sum, o) => sum + Number(o.total_amount ?? 0),
-    0,
-  );
-  const completedEarnings = completedOrders.reduce(
-    (sum, o) => sum + Number(o.seller_earnings ?? 0),
-    0,
-  );
-  const completedCommission = completedSales - completedEarnings;
+
+  // Use seller_earnings table for accurate financial data
+  const totalNet = earningsSummary?.totalNet ?? 0;
+  const totalGross = earningsSummary?.totalGross ?? 0;
+  const totalFees = earningsSummary?.totalFees ?? 0;
+  const availableBalance = earningsSummary?.availableBalance ?? 0;
+  const paidOrders = orders?.filter((o) => o.payment_status === "paid") ?? [];
   const pendingSales =
     orders
-      ?.filter((o) => o.status === "pending")
+      ?.filter((o) => o.payment_status === "pending")
       .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0) ?? 0;
 
   const sections = useMemo(
     () => [
       {
-        title: "Net Earnings",
-        value: orders === null ? "—" : `$${completedEarnings.toFixed(2)}`,
+        title: "Available Balance",
+        value: earningsSummary === null ? "—" : `₱${availableBalance.toFixed(2)}`,
         icon: DollarSign,
-        description: "After commission (completed)",
+        description: "Ready for withdrawal",
         tone: "bg-success/10 text-success",
       },
       {
-        title: "Gross Sales",
-        value: orders === null ? "—" : `$${completedSales.toFixed(2)}`,
+        title: "Total Earnings",
+        value: earningsSummary === null ? "—" : `₱${totalNet.toFixed(2)}`,
         icon: TrendingUp,
-        description: `${completedOrders.length} completed order${completedOrders.length !== 1 ? "s" : ""}`,
+        description: `${paidOrders.length} paid order${paidOrders.length !== 1 ? "s" : ""}`,
         tone: "bg-primary/10 text-primary",
       },
       {
-        title: "Commission Paid",
-        value: orders === null ? "—" : `$${completedCommission.toFixed(2)}`,
+        title: "Platform Fees",
+        value: earningsSummary === null ? "—" : `₱${totalFees.toFixed(2)}`,
         icon: ShoppingCart,
-        description: "Platform fees (5%)",
+        description: "10% commission",
         tone: "bg-muted text-muted-foreground",
       },
       {
         title: "Pending Sales",
-        value: orders === null ? "—" : `$${pendingSales.toFixed(2)}`,
+        value: orders === null ? "—" : `₱${pendingSales.toFixed(2)}`,
         icon: Package,
         description: `${statusCounts.pending} pending order${statusCounts.pending !== 1 ? "s" : ""}`,
         tone: "bg-warning/10 text-warning",
       },
     ],
-    [orders, completedSales, completedEarnings, completedCommission, completedOrders.length, pendingSales, statusCounts.pending],
+    [earningsSummary, orders, availableBalance, totalNet, totalFees, paidOrders.length, pendingSales, statusCounts.pending],
   );
 
   const openEdit = (p: SubmittedProduct) => {
@@ -362,12 +359,12 @@ function SellerDashboardPage() {
                               <SellerStatusBadge status={o.status} />
                             </td>
                             <td className="px-6 py-3 text-right tabular-nums text-muted-foreground">
-                              ${total.toFixed(2)}
+                              ₱{total.toFixed(2)}
                             </td>
                             <td className="px-6 py-3 text-right tabular-nums">
                               {isCompleted ? (
                                 <span className="font-semibold text-foreground">
-                                  ${earnings.toFixed(2)}
+                                  ₱{earnings.toFixed(2)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">—</span>
@@ -376,6 +373,67 @@ function SellerDashboardPage() {
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Earnings breakdown */}
+        <section>
+          <Card>
+            <CardHeader className="space-y-1 border-b border-border/60">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base font-semibold">Earnings History</CardTitle>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+                  {earningsSummary?.earnings.length ?? 0}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {earningsSummary === null ? (
+                <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+              ) : earningsSummary.earnings.length === 0 ? (
+                <p className="p-6 text-sm text-muted-foreground">No earnings yet. Earnings are created when an order is paid.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="px-6 py-2.5 font-medium">Order</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Gross</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Fee</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Net</th>
+                        <th className="px-6 py-2.5 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {earningsSummary.earnings.map((e) => (
+                        <tr key={e.id} className="hover:bg-muted/30">
+                          <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                            #{e.order_id.slice(0, 8)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums text-muted-foreground">
+                            ₱{e.gross_amount.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums text-destructive/70">
+                            -₱{e.platform_fee.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums font-semibold text-foreground">
+                            ₱{e.net_earnings.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                              e.status === "available" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                            )}>
+                              {e.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

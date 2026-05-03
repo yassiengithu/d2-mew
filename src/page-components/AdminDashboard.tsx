@@ -18,6 +18,8 @@ import {
   getAdminRevenueOverview,
   type AdminOrder,
   type CommissionDay,
+  getAdminPlatformCommission,
+  type PlatformCommissionSummary,
 } from "@/server/admin.functions";
 import { listAdminUsers, setUserDisabled, type AdminUser } from "@/server/admin-users.functions";
 import { getProductAnalytics, type ProductMetric } from "@/server/analytics.functions";
@@ -56,6 +58,7 @@ function AdminDashboardPage() {
   const [totalCommission, setTotalCommission] = useState<number | null>(null);
   const [perDay, setPerDay] = useState<CommissionDay[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [platformCommission, setPlatformCommission] = useState<PlatformCommissionSummary | null>(null);
 
   const [status, setStatus] = useState<string>("all");
   const [from, setFrom] = useState<string>("");
@@ -120,8 +123,9 @@ function AdminDashboardPage() {
       }),
       getAdminUsersOverview(),
       getAdminRevenueOverview(),
+      getAdminPlatformCommission().catch(() => null),
     ])
-      .then(([orders, users, revenue]) => {
+      .then(([orders, users, revenue, commission]) => {
         if (!active) return;
         setTotalOrders(orders.totalOrders);
         setRecentOrders(orders.recentOrders);
@@ -129,6 +133,7 @@ function AdminDashboardPage() {
         setTotalSellers(users.totalSellers);
         setTotalCommission(revenue.totalCommission);
         setPerDay(revenue.perDay);
+        if (commission) setPlatformCommission(commission);
       })
       .catch((e: unknown) => {
         if (!active) return;
@@ -149,10 +154,10 @@ function AdminDashboardPage() {
 
   const sections = [
     {
-      title: "Revenue",
-      value: totalCommission === null ? "—" : `$${totalCommission.toFixed(2)}`,
+      title: "Platform Revenue",
+      value: platformCommission ? `₱${platformCommission.totalPlatformFees.toFixed(2)}` : (totalCommission === null ? "—" : `₱${totalCommission.toFixed(2)}`),
       icon: DollarSign,
-      description: "Total commission",
+      description: platformCommission ? `10% from ${platformCommission.earningsCount} paid order${platformCommission.earningsCount !== 1 ? "s" : ""}` : "Total commission",
     },
     {
       title: "Orders",
@@ -287,7 +292,7 @@ function AdminDashboardPage() {
                         />
                       </div>
                       <span className="w-20 shrink-0 text-right font-medium tabular-nums text-foreground">
-                        ${d.commission.toFixed(2)}
+                        ₱{d.commission.toFixed(2)}
                       </span>
                     </li>
                   ))}
@@ -296,6 +301,34 @@ function AdminDashboardPage() {
             </CardContent>
           </Card>
         </section>
+
+        {platformCommission && (
+          <section className="mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-semibold">
+                  Platform Commission Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gross Sales (Paid)</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-foreground">₱{platformCommission.totalGross.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Platform Fees (10%)</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-success">₱{platformCommission.totalPlatformFees.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Seller Payouts</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-foreground">₱{(platformCommission.totalGross - platformCommission.totalPlatformFees).toFixed(2)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         <section className="mt-8">
           <Card>
@@ -325,7 +358,7 @@ function AdminDashboardPage() {
                         {o.status}
                       </span>
                       <span className="font-medium text-foreground">
-                        ${Number(o.total_amount).toFixed(2)}
+                        ₱{Number(o.total_amount).toFixed(2)}
                       </span>
                     </li>
                   ))}
@@ -358,7 +391,7 @@ function AdminDashboardPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-foreground">{s.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {s.sellerName} · ${s.price.toFixed(2)} · {s.category}
+                          {s.sellerName} · ₱{s.price.toFixed(2)} · {s.category}
                         </p>
                       </div>
                       <span
