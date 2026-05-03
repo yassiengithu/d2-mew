@@ -1120,6 +1120,11 @@ const Checkout = () => {
             <h2 className="text-sm font-bold text-foreground">Choose Courier</h2>
           </div>
 
+          <div className="rounded-xl bg-info/5 border border-info/20 p-2.5 mb-2.5 text-[11px] text-muted-foreground leading-relaxed">
+            <span className="font-bold text-foreground">Easyship</span> is automatic — a real shipment & tracking number are created instantly.
+            {" "}<span className="font-bold text-foreground">J&T Express</span> is manually fulfilled by our team — shipping cost shown is an estimate.
+          </div>
+
           {/* Live Easyship rates */}
           <div className="rounded-xl bg-card shadow-card p-3 mb-2.5 space-y-2">
             <div className="grid grid-cols-2 gap-2">
