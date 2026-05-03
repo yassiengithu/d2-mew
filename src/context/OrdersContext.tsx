@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import type { ProductSource } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";

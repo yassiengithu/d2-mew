@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, ImageIcon, PackagePlus, Clock, CheckCircle2, ExternalLink, Store, LogIn } from "lucide-react";

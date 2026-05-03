@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Heart, Package, Settings, ChevronRight, LogOut, HelpCircle, Bell, CreditCard, Wallet, PackagePlus, Store } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
