@@ -296,6 +296,37 @@ function SellerDashboardPage() {
 
         <section>
           <Card>
+            <CardHeader className="border-b border-border/60">
+              <CardTitle className="text-base font-semibold">Wallet</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pending</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-warning">
+                  {wallet === null ? "—" : `₱${wallet.pending_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Awaiting release</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-success">
+                  {wallet === null ? "—" : `₱${wallet.available_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Ready to withdraw</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Paid Out</p>
+                <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+                  {wallet === null ? "—" : `₱${wallet.paid_balance.toFixed(2)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">Lifetime withdrawn</p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card>
             <CardHeader className="space-y-3 border-b border-border/60">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-base font-semibold">
