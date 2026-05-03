@@ -20,6 +20,9 @@ import {
   type CommissionDay,
   getAdminPlatformCommission,
   type PlatformCommissionSummary,
+  getAdminPayouts,
+  updatePayoutStatus,
+  type AdminPayout,
 } from "@/server/admin.functions";
 import { listAdminUsers, setUserDisabled, type AdminUser } from "@/server/admin-users.functions";
 import { getProductAnalytics, type ProductMetric } from "@/server/analytics.functions";
@@ -59,6 +62,35 @@ function AdminDashboardPage() {
   const [perDay, setPerDay] = useState<CommissionDay[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [platformCommission, setPlatformCommission] = useState<PlatformCommissionSummary | null>(null);
+  const [payouts, setPayouts] = useState<AdminPayout[] | null>(null);
+  const [payoutsError, setPayoutsError] = useState<string | null>(null);
+  const [pendingPayoutId, setPendingPayoutId] = useState<string | null>(null);
+
+  const loadPayouts = useCallback(() => {
+    setPayoutsError(null);
+    getAdminPayouts()
+      .then((p) => setPayouts(p))
+      .catch((e: unknown) =>
+        setPayoutsError(e instanceof Error ? e.message : "Failed to load payouts"),
+      );
+  }, []);
+
+  useEffect(() => {
+    loadPayouts();
+  }, [loadPayouts]);
+
+  const changePayoutStatus = async (p: AdminPayout, next: AdminPayout["status"]) => {
+    setPendingPayoutId(p.id);
+    try {
+      await updatePayoutStatus({ data: { id: p.id, status: next } });
+      toast.success(`Payout marked ${next}`);
+      loadPayouts();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPendingPayoutId(null);
+    }
+  };
 
   const [status, setStatus] = useState<string>("all");
   const [from, setFrom] = useState<string>("");
@@ -297,7 +329,47 @@ function AdminDashboardPage() {
                     </li>
                   ))}
                 </ul>
+        )}
+
+        <section className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Seller payouts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {payoutsError ? (
+                <p className="text-sm text-destructive">{payoutsError}</p>
+              ) : payouts === null ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : payouts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No payouts yet.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {payouts.slice(0, 30).map((p) => (
+                    <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-xs text-muted-foreground">#{p.order_id.slice(0, 10)}</p>
+                        <p className="text-xs text-muted-foreground">Net ₱{Number(p.net_earnings).toFixed(2)} · Fee ₱{Number(p.platform_fee).toFixed(2)}</p>
+                      </div>
+                      <Select
+                        value={p.status}
+                        onValueChange={(v) => changePayoutStatus(p, v as AdminPayout["status"])}
+                        disabled={pendingPayoutId === p.id}
+                      >
+                        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </li>
+                  ))}
+                </ul>
               )}
+            </CardContent>
+          </Card>
+        </section>
             </CardContent>
           </Card>
         </section>

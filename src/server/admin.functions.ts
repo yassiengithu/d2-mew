@@ -105,3 +105,55 @@ export async function getAdminPlatformCommission(): Promise<PlatformCommissionSu
     earningsCount: rows.length,
   };
 }
+
+export type AdminPayout = {
+  id: string;
+  order_id: string;
+  seller_id: string;
+  gross_amount: number;
+  platform_fee: number;
+  net_earnings: number;
+  status: "pending" | "approved" | "paid";
+  created_at: string;
+  updated_at: string;
+};
+
+async function ensureAdmin(): Promise<string> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const userId = userRes.user?.id;
+  if (!userId) throw new Error("Not authenticated");
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!roleData) throw new Error("Unauthorized");
+  return userId;
+}
+
+export async function getAdminPayouts(): Promise<AdminPayout[]> {
+  await ensureAdmin();
+  const { data, error } = await supabase
+    .from("seller_earnings")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []) as AdminPayout[];
+}
+
+export async function updatePayoutStatus(
+  arg: Wrapped<{ id: string; status: "pending" | "approved" | "paid" }>,
+): Promise<AdminPayout> {
+  await ensureAdmin();
+  const { id, status } = unwrap(arg)!;
+  const { data, error } = await supabase
+    .from("seller_earnings")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as AdminPayout;
+}
