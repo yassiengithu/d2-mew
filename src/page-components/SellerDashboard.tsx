@@ -364,7 +364,7 @@ function SellerDashboardPage() {
                             <td className="px-6 py-3 text-right tabular-nums">
                               {isCompleted ? (
                                 <span className="font-semibold text-foreground">
-                                  ${earnings.toFixed(2)}
+                                  ₱{earnings.toFixed(2)}
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground">—</span>
