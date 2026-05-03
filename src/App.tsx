@@ -72,6 +72,7 @@ const AppRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/admin/shipments" element={<AdminShipments />} />
       <Route path="/seller-dashboard" element={<SellerDashboard />} />
       <Route path="/shipping-calculator" element={<ShippingCalculator />} />
       <Route path="/track" element={<TrackShipment />} />
