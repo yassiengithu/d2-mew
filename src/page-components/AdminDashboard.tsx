@@ -302,10 +302,34 @@ function AdminDashboardPage() {
           </Card>
         </section>
 
-        <section className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Recent orders</CardTitle>
+        {platformCommission && (
+          <section className="mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-semibold">
+                  Platform Commission Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gross Sales (Paid)</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-foreground">₱{platformCommission.totalGross.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Platform Fees (10%)</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-success">₱{platformCommission.totalPlatformFees.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Seller Payouts</p>
+                    <p className="mt-1 text-xl font-bold tabular-nums text-foreground">₱{(platformCommission.totalGross - platformCommission.totalPlatformFees).toFixed(2)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
             </CardHeader>
             <CardContent>
               {error ? (
