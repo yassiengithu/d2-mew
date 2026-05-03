@@ -184,11 +184,16 @@ function AdminDashboardPage() {
   return (
     <main className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Overview of your marketplace
-          </p>
+        <header className="mb-8 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Overview of your marketplace
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/shipments">Manage Shipments →</Link>
+          </Button>
         </header>
 
         <section className="mb-6">
