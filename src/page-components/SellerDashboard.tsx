@@ -381,12 +381,67 @@ function SellerDashboardPage() {
           </Card>
         </section>
 
+        {/* Earnings breakdown */}
         <section>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border/60">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-semibold">
-                  Your products
+            <CardHeader className="space-y-1 border-b border-border/60">
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-base font-semibold">Earnings History</CardTitle>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+                  {earningsSummary?.earnings.length ?? 0}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {earningsSummary === null ? (
+                <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+              ) : earningsSummary.earnings.length === 0 ? (
+                <p className="p-6 text-sm text-muted-foreground">No earnings yet. Earnings are created when an order is paid.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="px-6 py-2.5 font-medium">Order</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Gross</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Fee</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Net</th>
+                        <th className="px-6 py-2.5 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {earningsSummary.earnings.map((e) => (
+                        <tr key={e.id} className="hover:bg-muted/30">
+                          <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                            #{e.order_id.slice(0, 8)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums text-muted-foreground">
+                            ₱{e.gross_amount.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums text-destructive/70">
+                            -₱{e.platform_fee.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3 text-right tabular-nums font-semibold text-foreground">
+                            ₱{e.net_earnings.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                              e.status === "available" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                            )}>
+                              {e.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
                 </CardTitle>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
                   {products.length}
