@@ -154,10 +154,10 @@ function AdminDashboardPage() {
 
   const sections = [
     {
-      title: "Revenue",
-      value: totalCommission === null ? "—" : `$${totalCommission.toFixed(2)}`,
+      title: "Platform Revenue",
+      value: platformCommission ? `₱${platformCommission.totalPlatformFees.toFixed(2)}` : (totalCommission === null ? "—" : `₱${totalCommission.toFixed(2)}`),
       icon: DollarSign,
-      description: "Total commission",
+      description: platformCommission ? `10% from ${platformCommission.earningsCount} paid order${platformCommission.earningsCount !== 1 ? "s" : ""}` : "Total commission",
     },
     {
       title: "Orders",
