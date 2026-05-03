@@ -123,8 +123,9 @@ function AdminDashboardPage() {
       }),
       getAdminUsersOverview(),
       getAdminRevenueOverview(),
+      getAdminPlatformCommission().catch(() => null),
     ])
-      .then(([orders, users, revenue]) => {
+      .then(([orders, users, revenue, commission]) => {
         if (!active) return;
         setTotalOrders(orders.totalOrders);
         setRecentOrders(orders.recentOrders);
@@ -132,6 +133,7 @@ function AdminDashboardPage() {
         setTotalSellers(users.totalSellers);
         setTotalCommission(revenue.totalCommission);
         setPerDay(revenue.perDay);
+        if (commission) setPlatformCommission(commission);
       })
       .catch((e: unknown) => {
         if (!active) return;
