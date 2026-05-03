@@ -345,7 +345,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const attachShipment = (orderId: string, shipment: ShipmentInfo) => {
-    let notifyTarget: { uid: string | null | undefined } | null = null;
+    let notifyTarget = null as { uid: string | null | undefined } | null;
     setAllOrders((prev) =>
       prev.map((o) => {
         if (o.id !== orderId) return o;
