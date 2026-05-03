@@ -1,4 +1,4 @@
-const PLATFORM_COMMISSION_RATE = 0.05;
+const PLATFORM_COMMISSION_RATE = 0.10;
 
 /** Round to 2 decimals (matches DB trigger ROUND(x, 2)). */
 const round2 = (n: number) => Math.round(n * 100) / 100;

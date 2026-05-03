@@ -232,6 +232,42 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_earnings: {
+        Row: {
+          created_at: string
+          gross_amount: number
+          id: string
+          net_earnings: number
+          order_id: string
+          platform_fee: number
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_earnings?: number
+          order_id: string
+          platform_fee?: number
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_earnings?: number
+          order_id?: string
+          platform_fee?: number
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
           created_at: string
