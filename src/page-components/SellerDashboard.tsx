@@ -140,23 +140,41 @@ function SellerDashboardPage() {
     description?: string;
   }>({});
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet()])
-      .then(([ordersData, earningsData, walletData]) => {
-        if (!active) return;
+  const reload = () => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet(), getMyPayoutRequests()])
+      .then(([ordersData, earningsData, walletData, payoutData]) => {
         setOrders(ordersData);
         setEarningsSummary(earningsData);
         setWallet(walletData);
+        setPayoutRequests(payoutData);
       })
       .catch((e: unknown) => {
-        if (!active) return;
         setError(e instanceof Error ? e.message : "Failed to load data");
       });
-    return () => {
-      active = false;
-    };
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleRequestPayout = async () => {
+    const amt = parseFloat(payoutAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast({ title: "Invalid amount", description: "Enter a positive amount.", variant: "destructive" });
+      return;
+    }
+    setSubmittingPayout(true);
+    const res = await requestPayout({ amount: amt });
+    setSubmittingPayout(false);
+    if (!res.ok) {
+      toast({ title: "Request failed", description: res.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payout requested", description: `Request for ₱${amt.toFixed(2)} submitted.` });
+    setPayoutAmount("");
+    reload();
+  };
 
   const totalOrders = orders?.length ?? null;
   const statusCounts = useMemo(() => {
