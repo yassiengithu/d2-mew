@@ -104,7 +104,7 @@ import {
   useSubmittedProducts,
   type SubmittedProduct,
 } from "@/context/SubmittedProductsContext";
-import { getSellerOrders, getSellerEarningsSummary, getSellerWallet, type SellerOrder, type SellerEarningsSummary, type SellerWallet } from "@/server/seller.functions";
+import { getSellerOrders, getSellerEarningsSummary, getSellerWallet, getMyPayoutRequests, requestPayout, type SellerOrder, type SellerEarningsSummary, type SellerWallet, type SellerPayoutRequest } from "@/server/seller.functions";
 
 const editSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -124,6 +124,9 @@ function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
   const [wallet, setWallet] = useState<SellerWallet | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<SellerPayoutRequest[]>([]);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [submittingPayout, setSubmittingPayout] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
@@ -137,23 +140,41 @@ function SellerDashboardPage() {
     description?: string;
   }>({});
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet()])
-      .then(([ordersData, earningsData, walletData]) => {
-        if (!active) return;
+  const reload = () => {
+    Promise.all([getSellerOrders(), getSellerEarningsSummary(), getSellerWallet(), getMyPayoutRequests()])
+      .then(([ordersData, earningsData, walletData, payoutData]) => {
         setOrders(ordersData);
         setEarningsSummary(earningsData);
         setWallet(walletData);
+        setPayoutRequests(payoutData);
       })
       .catch((e: unknown) => {
-        if (!active) return;
         setError(e instanceof Error ? e.message : "Failed to load data");
       });
-    return () => {
-      active = false;
-    };
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleRequestPayout = async () => {
+    const amt = parseFloat(payoutAmount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast({ title: "Invalid amount", description: "Enter a positive amount.", variant: "destructive" });
+      return;
+    }
+    setSubmittingPayout(true);
+    const res = await requestPayout({ amount: amt });
+    setSubmittingPayout(false);
+    if (!res.ok) {
+      toast({ title: "Request failed", description: res.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payout requested", description: `Request for ₱${amt.toFixed(2)} submitted.` });
+    setPayoutAmount("");
+    reload();
+  };
 
   const totalOrders = orders?.length ?? null;
   const statusCounts = useMemo(() => {
@@ -321,6 +342,79 @@ function SellerDashboardPage() {
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">Lifetime withdrawn</p>
               </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card>
+            <CardHeader className="border-b border-border/60">
+              <CardTitle className="text-base font-semibold">Request payout</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Amount (PHP)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={payoutAmount}
+                    onChange={(e) => setPayoutAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Available: {wallet ? `₱${wallet.available_balance.toFixed(2)}` : "—"}
+                  </p>
+                </div>
+                <Button
+                  onClick={handleRequestPayout}
+                  disabled={submittingPayout || !wallet || wallet.available_balance <= 0}
+                >
+                  {submittingPayout ? "Submitting…" : "Request payout"}
+                </Button>
+              </div>
+
+              {payoutRequests.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border border-border/60">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-2">Date</th>
+                        <th className="px-4 py-2">Amount</th>
+                        <th className="px-4 py-2">Status</th>
+                        <th className="px-4 py-2">Note</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {payoutRequests.map((r) => (
+                        <tr key={r.id}>
+                          <td className="px-4 py-2 text-muted-foreground">
+                            {new Date(r.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 font-medium tabular-nums">₱{r.amount.toFixed(2)}</td>
+                          <td className="px-4 py-2">
+                            <span className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                              r.status === "approved"
+                                ? "bg-success/10 text-success"
+                                : r.status === "rejected"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-warning/10 text-warning"
+                            )}>
+                              {r.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground">{r.admin_note ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>

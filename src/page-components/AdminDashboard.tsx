@@ -23,6 +23,9 @@ import {
   getAdminPayouts,
   updatePayoutStatus,
   type AdminPayout,
+  getAdminPayoutRequests,
+  updatePayoutRequestStatus,
+  type PayoutRequest,
 } from "@/server/admin.functions";
 import { listAdminUsers, setUserDisabled, type AdminUser } from "@/server/admin-users.functions";
 import { getProductAnalytics, type ProductMetric } from "@/server/analytics.functions";
@@ -65,6 +68,9 @@ function AdminDashboardPage() {
   const [payouts, setPayouts] = useState<AdminPayout[] | null>(null);
   const [payoutsError, setPayoutsError] = useState<string | null>(null);
   const [pendingPayoutId, setPendingPayoutId] = useState<string | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[] | null>(null);
+  const [payoutRequestsError, setPayoutRequestsError] = useState<string | null>(null);
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
 
   const loadPayouts = useCallback(() => {
     setPayoutsError(null);
@@ -75,9 +81,33 @@ function AdminDashboardPage() {
       );
   }, []);
 
+  const loadPayoutRequests = useCallback(() => {
+    setPayoutRequestsError(null);
+    getAdminPayoutRequests()
+      .then((p) => setPayoutRequests(p))
+      .catch((e: unknown) =>
+        setPayoutRequestsError(e instanceof Error ? e.message : "Failed to load requests"),
+      );
+  }, []);
+
   useEffect(() => {
     loadPayouts();
-  }, [loadPayouts]);
+    loadPayoutRequests();
+  }, [loadPayouts, loadPayoutRequests]);
+
+  const changePayoutRequest = async (r: PayoutRequest, next: "approved" | "rejected") => {
+    setPendingRequestId(r.id);
+    try {
+      await updatePayoutRequestStatus({ data: { id: r.id, status: next } });
+      toast.success(`Payout request ${next}`);
+      loadPayoutRequests();
+      loadPayouts();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPendingRequestId(null);
+    }
+  };
 
   const changePayoutStatus = async (p: AdminPayout, next: AdminPayout["status"]) => {
     setPendingPayoutId(p.id);
@@ -330,6 +360,74 @@ function AdminDashboardPage() {
                   ))}
                 </ul>
         )}
+
+        <section className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Payout requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {payoutRequestsError ? (
+                <p className="text-sm text-destructive">{payoutRequestsError}</p>
+              ) : payoutRequests === null ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : payoutRequests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No payout requests yet.</p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-border/60">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-2">Date</th>
+                        <th className="px-4 py-2">Seller</th>
+                        <th className="px-4 py-2">Amount</th>
+                        <th className="px-4 py-2">Status</th>
+                        <th className="px-4 py-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {payoutRequests.map((r) => (
+                        <tr key={r.id}>
+                          <td className="px-4 py-2 text-muted-foreground">
+                            {new Date(r.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 font-mono text-xs">{r.seller_id.slice(0, 8)}…</td>
+                          <td className="px-4 py-2 font-medium tabular-nums">₱{r.amount.toFixed(2)}</td>
+                          <td className="px-4 py-2 capitalize">{r.status}</td>
+                          <td className="px-4 py-2 text-right">
+                            {r.status === "pending" ? (
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={pendingRequestId === r.id}
+                                  onClick={() => changePayoutRequest(r, "rejected")}
+                                >
+                                  Reject
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  disabled={pendingRequestId === r.id}
+                                  onClick={() => changePayoutRequest(r, "approved")}
+                                >
+                                  Approve
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                {r.processed_at ? new Date(r.processed_at).toLocaleDateString() : "—"}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
         <section className="mt-8">
           <Card>
