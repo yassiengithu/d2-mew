@@ -110,3 +110,68 @@ export async function getSellerEarningsSummary(): Promise<SellerEarningsSummary>
 
   return { earnings, totalGross, totalFees, totalNet, availableBalance };
 }
+
+export type SellerPayoutRequest = {
+  id: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  processed_at: string | null;
+  created_at: string;
+};
+
+export async function getMyPayoutRequests(): Promise<SellerPayoutRequest[]> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const userId = userRes.user?.id;
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from("payout_requests")
+    .select("id, amount, status, admin_note, processed_at, created_at")
+    .eq("seller_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({ ...r, amount: Number(r.amount) })) as SellerPayoutRequest[];
+}
+
+export async function requestPayout(arg: { data: { amount: number } } | { amount: number }) {
+  const payload = "data" in arg ? arg.data : arg;
+  const amount = Number(payload.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false as const, error: "Amount must be greater than 0" };
+  }
+  const { data: userRes } = await supabase.auth.getUser();
+  const userId = userRes.user?.id;
+  if (!userId) return { ok: false as const, error: "Not authenticated" };
+
+  // Check available balance
+  const { data: wallet } = await supabase
+    .from("seller_wallet")
+    .select("available_balance")
+    .eq("seller_id", userId)
+    .maybeSingle();
+  const available = Number(wallet?.available_balance ?? 0);
+  if (amount > available) {
+    return { ok: false as const, error: `Amount exceeds available balance (₱${available.toFixed(2)})` };
+  }
+
+  // Prevent stacking: sum of pending requests + new amount must not exceed available
+  const { data: pendingReqs } = await supabase
+    .from("payout_requests")
+    .select("amount")
+    .eq("seller_id", userId)
+    .eq("status", "pending");
+  const pendingTotal = (pendingReqs ?? []).reduce((s, r: any) => s + Number(r.amount), 0);
+  if (pendingTotal + amount > available) {
+    return {
+      ok: false as const,
+      error: `You already have ₱${pendingTotal.toFixed(2)} in pending requests. Max available: ₱${(available - pendingTotal).toFixed(2)}`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("payout_requests")
+    .insert({ seller_id: userId, amount, status: "pending" });
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
