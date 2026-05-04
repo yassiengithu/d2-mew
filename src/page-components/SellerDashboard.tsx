@@ -124,6 +124,9 @@ function SellerDashboardPage() {
   const [orders, setOrders] = useState<SellerOrder[] | null>(null);
   const [earningsSummary, setEarningsSummary] = useState<SellerEarningsSummary | null>(null);
   const [wallet, setWallet] = useState<SellerWallet | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<SellerPayoutRequest[]>([]);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [submittingPayout, setSubmittingPayout] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { products, updateProduct, removeProduct, setFeatured } =
