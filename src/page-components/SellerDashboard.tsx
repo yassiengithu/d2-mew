@@ -462,7 +462,7 @@ function SellerDashboardPage() {
                               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize",
                               e.status === "paid"
                                 ? "bg-success/10 text-success"
-                                : e.status === "approved"
+                                : e.status === "approved" || e.status === "available"
                                   ? "bg-primary/10 text-primary"
                                   : "bg-muted text-muted-foreground"
                             )}>
