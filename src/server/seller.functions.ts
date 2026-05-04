@@ -103,9 +103,9 @@ export async function getSellerEarningsSummary(): Promise<SellerEarningsSummary>
   const totalGross = earnings.reduce((s, e) => s + e.gross_amount, 0);
   const totalFees = earnings.reduce((s, e) => s + e.platform_fee, 0);
   const totalNet = earnings.reduce((s, e) => s + e.net_earnings, 0);
-  // Available balance = approved payouts not yet paid out
+  // Available balance = released earnings not yet paid out (approved or available)
   const availableBalance = earnings
-    .filter((e) => e.status === "approved")
+    .filter((e) => e.status === "approved" || e.status === "available")
     .reduce((s, e) => s + e.net_earnings, 0);
 
   return { earnings, totalGross, totalFees, totalNet, availableBalance };
