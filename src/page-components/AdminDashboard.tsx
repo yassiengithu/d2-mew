@@ -68,6 +68,9 @@ function AdminDashboardPage() {
   const [payouts, setPayouts] = useState<AdminPayout[] | null>(null);
   const [payoutsError, setPayoutsError] = useState<string | null>(null);
   const [pendingPayoutId, setPendingPayoutId] = useState<string | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[] | null>(null);
+  const [payoutRequestsError, setPayoutRequestsError] = useState<string | null>(null);
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
 
   const loadPayouts = useCallback(() => {
     setPayoutsError(null);
@@ -78,9 +81,33 @@ function AdminDashboardPage() {
       );
   }, []);
 
+  const loadPayoutRequests = useCallback(() => {
+    setPayoutRequestsError(null);
+    getAdminPayoutRequests()
+      .then((p) => setPayoutRequests(p))
+      .catch((e: unknown) =>
+        setPayoutRequestsError(e instanceof Error ? e.message : "Failed to load requests"),
+      );
+  }, []);
+
   useEffect(() => {
     loadPayouts();
-  }, [loadPayouts]);
+    loadPayoutRequests();
+  }, [loadPayouts, loadPayoutRequests]);
+
+  const changePayoutRequest = async (r: PayoutRequest, next: "approved" | "rejected") => {
+    setPendingRequestId(r.id);
+    try {
+      await updatePayoutRequestStatus({ data: { id: r.id, status: next } });
+      toast.success(`Payout request ${next}`);
+      loadPayoutRequests();
+      loadPayouts();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setPendingRequestId(null);
+    }
+  };
 
   const changePayoutStatus = async (p: AdminPayout, next: AdminPayout["status"]) => {
     setPendingPayoutId(p.id);
