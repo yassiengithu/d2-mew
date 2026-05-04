@@ -157,3 +157,40 @@ export async function updatePayoutStatus(
   if (error) throw error;
   return data as AdminPayout;
 }
+
+export type PayoutRequest = {
+  id: string;
+  seller_id: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getAdminPayoutRequests(): Promise<PayoutRequest[]> {
+  await ensureAdmin();
+  const { data, error } = await supabase
+    .from("payout_requests")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({ ...r, amount: Number(r.amount) })) as PayoutRequest[];
+}
+
+export async function updatePayoutRequestStatus(
+  arg: Wrapped<{ id: string; status: "approved" | "rejected"; note?: string }>,
+): Promise<PayoutRequest> {
+  await ensureAdmin();
+  const { id, status, note } = unwrap(arg)!;
+  const { data, error } = await supabase
+    .from("payout_requests")
+    .update({ status, admin_note: note ?? null })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return { ...(data as any), amount: Number((data as any).amount) } as PayoutRequest;
+}
